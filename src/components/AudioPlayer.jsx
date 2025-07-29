@@ -115,12 +115,17 @@ const [playlist, setPlaylist] = useState(() => {
   const onLoadedMetadata = () => setDuration(audioRef.current.duration);
 
   const onSeek = (e) => {
-    const rect = progressRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const newTime = (clickX / rect.width) * duration;
-    audioRef.current.currentTime = newTime;
-    setProgress(newTime);
-  };
+  const rect = progressRef.current.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  const newTime = (clickX / rect.width) * duration;
+  audioRef.current.currentTime = newTime;
+  setProgress(newTime);
+
+  if (audioRef.current.paused && isPlaying) {
+    audioRef.current.play().catch(err => console.warn("Auto play failed after seek", err));
+  }
+};
+
 
   const onEnded = () => {
     if (isLoop) {
@@ -138,12 +143,14 @@ const [playlist, setPlaylist] = useState(() => {
   };
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.pause();
-    audio.load();
-    if (isPlaying) audio.play();
-  }, [currentIndex]);
+  const audio = audioRef.current;
+  if (!audio) return;
+  audio.pause();
+  audio.load();
+  if (isPlaying) {
+    audio.play().catch((e) => console.error("Playback error:", e));
+  }
+}, [currentIndex]);
 
   useEffect(() => {
     const storedVolume = localStorage.getItem("volume");
@@ -161,6 +168,13 @@ const [playlist, setPlaylist] = useState(() => {
     localStorage.setItem("volume", volume);
     if (audioRef.current) audioRef.current.volume = volume;
   }, [volume]);
+
+  useEffect(() => {
+  const savedIndex = localStorage.getItem("currentIndex");
+  if (savedIndex !== null) setCurrentIndex(Number(savedIndex));
+  }, []);
+
+
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -261,7 +275,7 @@ const [playlist, setPlaylist] = useState(() => {
     <>
       <Toast message={toastMessage} onClose={() => setToastMessage("")} />
 
-      <div className="w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white pb-20 px-4 pt-6 min-h-screen flex flex-col">
+      <div className="w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white pb-20 px-1 pt-1 min-h-screen flex flex-col">
         {/* Player + main content container */}
         <div className="flex flex-1 flex-col md:flex-row gap-4">
           {/* Left: Player card */}
@@ -418,8 +432,10 @@ const [playlist, setPlaylist] = useState(() => {
                     {naatList.map((track, i) => (
                       <li
                         key={i}
-                        className="flex justify-between items-center p-2 border-b border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-800 cursor-pointer rounded"
+                        className={`flex justify-between items-center p-2 border-b rounded cursor-pointer ${currentIndex === i ? "bg-purple-200 dark:bg-purple-700" : "hover:bg-gray-200 dark:hover:bg-gray-800"
+                          }`}
                       >
+
                         <div
                           onClick={() => {
                             setCurrentIndex(i);
@@ -647,15 +663,18 @@ const [playlist, setPlaylist] = useState(() => {
         {/* Mobile Bottom Nav */}
         <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-gray-900 border-t border-gray-300 dark:border-gray-700 flex justify-around py-3 md:hidden">
           <button
-            className={`flex flex-col items-center text-sm ${view === "home" ? "text-purple-700" : "opacity-50"}`}
+            className={`flex flex-col items-center text-sm outline-none border-none hover:outline-none focus:ring-0 ${view === "home" ? "text-purple-700" : "opacity-50"
+              }`}
             onClick={() => setView("home")}
             aria-label="Home"
           >
             <Home size={24} />
             Home
           </button>
+
           <button
-            className={`flex flex-col items-center text-sm ${view === "naat" ? "text-purple-700" : "opacity-50"}`}
+            className={`flex flex-col items-center text-sm outline-none border-none hover:outline-none focus:ring-0 ${view === "naat" ? "text-purple-700" : "opacity-50"
+              }`}
             onClick={() => setView("naat")}
             aria-label="Naat"
           >
@@ -663,7 +682,8 @@ const [playlist, setPlaylist] = useState(() => {
             Naat
           </button>
           <button
-            className={`flex flex-col items-center text-sm ${view === "playlist" ? "text-purple-700" : "opacity-50"}`}
+            className={`flex flex-col items-center text-sm outline-none border-none hover:outline-none focus:ring-0 ${view === "playlist" ? "text-purple-700" : "opacity-50"
+              }`}
             onClick={() => setView("playlist")}
             aria-label="Playlist"
           >
@@ -671,7 +691,8 @@ const [playlist, setPlaylist] = useState(() => {
             Playlist
           </button>
           <button
-            className={`flex flex-col items-center text-sm ${view === "favorites" ? "text-purple-700" : "opacity-50"}`}
+            className={`flex flex-col items-center text-sm outline-none border-none hover:outline-none focus:ring-0 ${view === "favorites" ? "text-purple-700" : "opacity-50"
+              }`}
             onClick={() => setView("favorites")}
             aria-label="Favorites"
           >
