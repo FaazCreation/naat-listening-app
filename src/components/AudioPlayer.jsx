@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import { SkipBack, SkipForward, Repeat, Shuffle, Trash2, Home, ListMusic, Heart } from "lucide-react";
-import axios from "axios";
 
 const naatList = [
   {
