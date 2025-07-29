@@ -422,7 +422,7 @@ const [playlist, setPlaylist] = useState(() => {
 
 
           {/* ✅ Right: List views (hidden on mobile when view === "home") */}
-          {(!isMobile || view !== "home") && (
+          {!(isMobile && (view === "naat" || view === "playlist" || view === "favorites")) && (
             <div className="md:w-2/3 overflow-auto max-h-[calc(100vh-5rem)]">
               {/* Home view: all naatList */}
               {view === "home" && (
@@ -440,6 +440,7 @@ const [playlist, setPlaylist] = useState(() => {
                           onClick={() => {
                             setCurrentIndex(i);
                             setIsPlaying(true);
+                            if (isMobile) setView("home");
                           }}
                           className="flex gap-4 items-center flex-1"
                         >
@@ -495,6 +496,7 @@ const [playlist, setPlaylist] = useState(() => {
                               if (foundIndex !== -1) setCurrentIndex(foundIndex);
                               else setCurrentIndex(0);
                               setIsPlaying(true);
+                              if (isMobile) setView("home");
                             }}
                             className="flex gap-4 items-center flex-1 cursor-pointer"
                           >
@@ -539,6 +541,7 @@ const [playlist, setPlaylist] = useState(() => {
                               onClick={() => {
                                 setCurrentIndex(index);
                                 setIsPlaying(true);
+                                if (isMobile) setView("home");
                               }}
                               className="flex gap-4 items-center flex-1 cursor-pointer"
                             >
@@ -573,8 +576,9 @@ const [playlist, setPlaylist] = useState(() => {
                       >
                         <div
                           onClick={() => {
-                            setCurrentIndex(i);
+                            setCurrentIndex(index);
                             setIsPlaying(true);
+                            if (isMobile) setView("home");
                           }}
                           className="flex gap-4 items-center flex-1"
                         >
