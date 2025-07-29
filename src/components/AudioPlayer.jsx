@@ -48,9 +48,24 @@ export default function AudioPlayer() {
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   // favorites is a Set of indexes (numbers)
-  const [favorites, setFavorites] = useState(() => new Set());
-  // playlist is array of full tracks
-  const [playlist, setPlaylist] = useState([]);
+ const [favorites, setFavorites] = useState(() => {
+  try {
+    const stored = localStorage.getItem("favorites");
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  } catch {
+    return new Set();
+  }
+});
+
+const [playlist, setPlaylist] = useState(() => {
+  try {
+    const stored = localStorage.getItem("playlist");
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+});
+
   // view can be: home, playlist, favorites
   const [view, setView] = useState("home");
   const [loading, setLoading] = useState(false);
@@ -210,40 +225,34 @@ export default function AudioPlayer() {
   };
 
   // Fetch saved data from backend (optional, can be mocked here)
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      try {
-        // Simulate backend fetch with empty or demo data
-        // Replace this with actual axios calls if backend exists
-        // const [favRes, plRes] = await Promise.all([
-        //   axios.get("/api/favorites"),
-        //   axios.get("/api/playlist"),
-        // ]);
-        // setFavorites(new Set(favRes.data)); // array of indexes
-        // setPlaylist(plRes.data);            // array of tracks
+//   useEffect(() => {
+//   try {
+//     const storedFavorites = localStorage.getItem("favorites");
+//     if (storedFavorites) {
+//       const favArray = JSON.parse(storedFavorites);
+//       setFavorites(new Set(favArray));
+//     }
 
-        // For demo, keep empty or prefill:
-        // setFavorites(new Set([0])); // demo favorite
-        // setPlaylist([naatList[1]]); // demo playlist
+//     const storedPlaylist = localStorage.getItem("playlist");
+//     if (storedPlaylist) {
+//       setPlaylist(JSON.parse(storedPlaylist));
+//     }
+//   } catch (err) {
+//     console.error("Error loading from localStorage:", err);
+//   }
+// }, []);
 
-      } catch (err) {
-        console.error("Backend fetch failed", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
 
   // Save favorites and playlist to backend (optional)
   useEffect(() => {
-    // axios.post("/api/favorites", { favorites: [...favorites] });
+    localStorage.setItem("favorites", JSON.stringify([...favorites]));
   }, [favorites]);
 
   useEffect(() => {
-    // axios.post("/api/playlist", { playlist });
+    localStorage.setItem("playlist", JSON.stringify(playlist));
   }, [playlist]);
+
+
 
   // For debugging:
   // useEffect(() => { console.log("Favorites:", [...favorites]); }, [favorites]);
@@ -414,8 +423,7 @@ export default function AudioPlayer() {
             </div>
           </div>
 
-          {/* Right: List views */}
-          {/* On mobile, only show if view != "home" */}
+          {/* ✅ Right: List views (hidden on mobile when view === "home") */}
           {(!isMobile || view !== "home") && (
             <div className="md:w-2/3 overflow-auto max-h-[calc(100vh-5rem)]">
               {/* Home view: all naatList */}
@@ -445,16 +453,18 @@ export default function AudioPlayer() {
                           <button
                             aria-label="Add to Playlist"
                             onClick={() => handleAddToPlaylist(i)}
-                            className="p-2 rounded bg-purple-600 text-white hover:bg-purple-700"
+                            className={`p-2 rounded hover:bg-purple-200 dark:hover:bg-purple-800 ${playlist.some((item) => item.src === track.src)
+                                ? "bg-purple-600 text-white"
+                                : "text-purple-600 dark:text-purple-300"
+                              }`}
                           >
-                            + Playlist
+                            <ListMusic size={18} />
                           </button>
                           <button
                             aria-label="Toggle Favorite"
                             onClick={() => handleToggleFavorite(i)}
-                            className={`p-2 rounded hover:bg-red-200 dark:hover:bg-red-800 ${
-                              favorites.has(i) ? "bg-red-500 text-white" : "bg-transparent"
-                            }`}
+                            className={`p-2 rounded hover:bg-red-200 dark:hover:bg-red-800 ${favorites.has(i) ? "bg-red-500 text-white" : "bg-transparent"
+                              }`}
                           >
                             <Heart size={18} />
                           </button>
@@ -481,11 +491,9 @@ export default function AudioPlayer() {
                         >
                           <div
                             onClick={() => {
-                              // Play the selected playlist track
-                              // Find index in naatList to sync currentIndex if exists
                               const foundIndex = naatList.findIndex((t) => t.src === track.src);
                               if (foundIndex !== -1) setCurrentIndex(foundIndex);
-                              else setCurrentIndex(0); // fallback
+                              else setCurrentIndex(0);
                               setIsPlaying(true);
                             }}
                             className="flex gap-4 items-center flex-1 cursor-pointer"
@@ -520,7 +528,6 @@ export default function AudioPlayer() {
                   {favorites.size > 0 && (
                     <ul>
                       {[...favorites].map((index) => {
-                        // Defensive check: if index not in naatList, skip
                         if (!naatList[index]) return null;
                         const fav = naatList[index];
                         return (
@@ -555,8 +562,56 @@ export default function AudioPlayer() {
                   )}
                 </>
               )}
+              {view === "naat" && (
+                <>
+                  <h3 className="font-semibold mb-2">All Naats</h3>
+                  <ul>
+                    {naatList.map((track, i) => (
+                      <li
+                        key={i}
+                        className="flex justify-between items-center p-2 border-b border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-800 cursor-pointer rounded"
+                      >
+                        <div
+                          onClick={() => {
+                            setCurrentIndex(i);
+                            setIsPlaying(true);
+                          }}
+                          className="flex gap-4 items-center flex-1"
+                        >
+                          <img src={track.cover} alt={track.title} className="w-12 h-12 rounded object-cover" />
+                          <div>
+                            <h4 className="font-semibold">{track.title}</h4>
+                            <p className="text-xs opacity-70">{track.artist}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            aria-label="Add to Playlist"
+                            onClick={() => handleAddToPlaylist(i)}
+                            className={`p-2 rounded hover:bg-purple-200 dark:hover:bg-purple-800 ${playlist.some((item) => item.src === track.src)
+                                ? "bg-purple-600 text-white"
+                                : "text-purple-600 dark:text-purple-300"
+                              }`}
+                          >
+                            <ListMusic size={18} />
+                          </button>
+                          <button
+                            aria-label="Toggle Favorite"
+                            onClick={() => handleToggleFavorite(i)}
+                            className={`p-2 rounded hover:bg-red-200 dark:hover:bg-red-800 ${favorites.has(i) ? "bg-red-500 text-white" : "bg-transparent"
+                              }`}
+                          >
+                            <Heart size={18} />
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
           )}
+
         </div>
         {/* Desktop Nav Buttons (visible only on md and up) */}
         <div className="hidden md:flex gap-4 justify-start items-center mt-6">
@@ -570,6 +625,16 @@ export default function AudioPlayer() {
           >
             <Home className="inline-block mr-2" size={18} />
             Home
+          </button>
+          <button
+            onClick={() => setView("naat")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${view === "naat"
+                ? "bg-purple-700 text-white"
+                : "bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-purple-200 dark:hover:bg-purple-800"
+              }`}
+          >
+            <ListMusic className="inline-block mr-2" size={18} />
+            Naat
           </button>
           <button
             onClick={() => setView("playlist")}
@@ -604,6 +669,14 @@ export default function AudioPlayer() {
           >
             <Home size={24} />
             Home
+          </button>
+          <button
+            className={`flex flex-col items-center text-sm ${view === "naat" ? "text-purple-700" : "opacity-50"}`}
+            onClick={() => setView("naat")}
+            aria-label="Naat"
+          >
+            <ListMusic size={24} />
+            Naat
           </button>
           <button
             className={`flex flex-col items-center text-sm ${view === "playlist" ? "text-purple-700" : "opacity-50"}`}
