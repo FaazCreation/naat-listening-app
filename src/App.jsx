@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import AudioPlayer from "./components/AudioPlayer";
-import { Sun, Moon, SkipBack, SkipForward } from "lucide-react";
+import { Sun, Moon, Crown } from "lucide-react";
+
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -25,6 +26,17 @@ function App() {
             <Moon className="h-6 w-6 text-gray-700" />
           )}
         </button>
+      </div>
+
+      {/* App Name and Slogan */}
+      <div className="flex flex-col items-center mb-8">
+        <div className="flex items-center space-x-2 text-white dark:text-gray-200">
+          <Crown className="h-8 w-8 text-yellow-300" />
+          <h1 className="text-4xl font-semibold tracking-wide select-none">Sukūn</h1>
+        </div>
+        <p className="mt-1 text-lg italic text-yellow-100 dark:text-yellow-300 select-none">
+          Voice of Faith
+        </p>
       </div>
 
       {/* Audio Player component centered */}
