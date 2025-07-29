@@ -224,25 +224,6 @@ const [playlist, setPlaylist] = useState(() => {
     });
   };
 
-  // Fetch saved data from backend (optional, can be mocked here)
-//   useEffect(() => {
-//   try {
-//     const storedFavorites = localStorage.getItem("favorites");
-//     if (storedFavorites) {
-//       const favArray = JSON.parse(storedFavorites);
-//       setFavorites(new Set(favArray));
-//     }
-
-//     const storedPlaylist = localStorage.getItem("playlist");
-//     if (storedPlaylist) {
-//       setPlaylist(JSON.parse(storedPlaylist));
-//     }
-//   } catch (err) {
-//     console.error("Error loading from localStorage:", err);
-//   }
-// }, []);
-
-
   // Save favorites and playlist to backend (optional)
   useEffect(() => {
     localStorage.setItem("favorites", JSON.stringify([...favorites]));
@@ -284,144 +265,147 @@ const [playlist, setPlaylist] = useState(() => {
         {/* Player + main content container */}
         <div className="flex flex-1 flex-col md:flex-row gap-4">
           {/* Left: Player card */}
-          <div className="md:w-1/3 bg-purple-100 dark:bg-purple-900 rounded-lg p-4 flex flex-col items-center">
-            <img
-              src={naatList[currentIndex].cover}
-              alt={naatList[currentIndex].title}
-              className="rounded-lg mb-4 w-full object-cover max-h-64"
-            />
-            <h2 className="text-xl font-bold">{naatList[currentIndex].title}</h2>
-            <p className="text-sm opacity-70">{naatList[currentIndex].artist}</p>
-
-            <audio
-              ref={audioRef}
-              onTimeUpdate={onTimeUpdate}
-              onLoadedMetadata={onLoadedMetadata}
-              onEnded={onEnded}
-            >
-              <source src={naatList[currentIndex].src} type="audio/mp3" />
-            </audio>
-
-            {/* Progress bar */}
-            <div
-              ref={progressRef}
-              className="w-full h-2 bg-purple-300 rounded my-4 cursor-pointer"
-              onClick={onSeek}
-            >
-              <div
-                className="h-2 bg-purple-700 rounded"
-                style={{ width: `${(progress / duration) * 100 || 0}%` }}
-              ></div>
-            </div>
-            <div className="flex justify-between w-full text-xs opacity-70 font-mono">
-              <span>{formatTime(progress)}</span>
-              <span>{formatTime(duration)}</span>
-            </div>
-
-            {/* Controls */}
-            <div className="flex gap-3 my-3 text-purple-700 dark:text-purple-300 items-center">
-              <button
-                aria-label="Shuffle"
-                onClick={toggleShuffle}
-                className={`p-2 rounded ${isShuffle ? "bg-purple-700 text-white" : "hover:bg-purple-300 dark:hover:bg-purple-800"}`}
-              >
-                <Shuffle size={20} />
-              </button>
-              <button
-                aria-label="Previous"
-                onClick={prevTrack}
-                className="p-2 rounded hover:bg-purple-300 dark:hover:bg-purple-800"
-              >
-                <SkipBack size={24} />
-              </button>
-              <button
-                aria-label="Play/Pause"
-                onClick={togglePlay}
-                className="p-3 rounded-full bg-purple-700 text-white shadow-lg hover:brightness-90"
-              >
-                {isPlaying ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    className="w-6 h-6"
-                  >
-                    <rect x="6" y="4" width="4" height="16" fill="currentColor" />
-                    <rect x="14" y="4" width="4" height="16" fill="currentColor" />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    className="w-6 h-6"
-                  >
-                    <path d="M5 3l14 9-14 9V3z" />
-                  </svg>
-                )}
-              </button>
-              <button
-                aria-label="Next"
-                onClick={nextTrack}
-                className="p-2 rounded hover:bg-purple-300 dark:hover:bg-purple-800"
-              >
-                <SkipForward size={24} />
-              </button>
-              <button
-                aria-label="Loop"
-                onClick={toggleLoop}
-                className={`p-2 rounded ${isLoop ? "bg-purple-700 text-white" : "hover:bg-purple-300 dark:hover:bg-purple-800"}`}
-              >
-                <Repeat size={20} />
-              </button>
-            </div>
-
-            {/* Volume */}
-            <div className="flex items-center gap-2 w-full">
-              <button
-                aria-label="Mute/Unmute"
-                onClick={() => {
-                  if (isMuted) {
-                    setVolume(0.5);
-                    setIsMuted(false);
-                    if (audioRef.current) audioRef.current.volume = 0.5;
-                  } else {
-                    setVolume(0);
-                    setIsMuted(true);
-                    if (audioRef.current) audioRef.current.volume = 0;
-                  }
-                }}
-                className="p-2 rounded hover:bg-purple-300 dark:hover:bg-purple-800"
-              >
-                {isMuted || volume === 0 ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
-                    <path d="M16.5 12l5-5m0 10l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M9 9v6H5l-4 4V5l4 4h4z" />
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
-                    <path d="M5 9v6h4l5 5V4L9 9H5z" />
-                  </svg>
-                )}
-              </button>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={volume}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  setVolume(val);
-                  setIsMuted(val === 0);
-                  if (audioRef.current) audioRef.current.volume = val;
-                }}
-                className="w-full"
+          {!(isMobile && view === "naat") && (
+            <div className="md:w-1/3 bg-purple-100 dark:bg-purple-900 rounded-lg p-4 flex flex-col items-center">
+              <img
+                src={naatList[currentIndex].cover}
+                alt={naatList[currentIndex].title}
+                className="rounded-lg mb-4 w-full object-cover max-h-64"
               />
+              <h2 className="text-xl font-bold">{naatList[currentIndex].title}</h2>
+              <p className="text-sm opacity-70">{naatList[currentIndex].artist}</p>
+
+              <audio
+                ref={audioRef}
+                onTimeUpdate={onTimeUpdate}
+                onLoadedMetadata={onLoadedMetadata}
+                onEnded={onEnded}
+              >
+                <source src={naatList[currentIndex].src} type="audio/mp3" />
+              </audio>
+
+              {/* Progress bar */}
+              <div
+                ref={progressRef}
+                className="w-full h-2 bg-purple-300 rounded my-4 cursor-pointer"
+                onClick={onSeek}
+              >
+                <div
+                  className="h-2 bg-purple-700 rounded"
+                  style={{ width: `${(progress / duration) * 100 || 0}%` }}
+                ></div>
+              </div>
+              <div className="flex justify-between w-full text-xs opacity-70 font-mono">
+                <span>{formatTime(progress)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+
+              {/* Controls */}
+              <div className="flex gap-3 my-3 text-purple-700 dark:text-purple-300 items-center">
+                <button
+                  aria-label="Shuffle"
+                  onClick={toggleShuffle}
+                  className={`p-2 rounded ${isShuffle ? "bg-purple-700 text-white" : "hover:bg-purple-300 dark:hover:bg-purple-800"}`}
+                >
+                  <Shuffle size={20} />
+                </button>
+                <button
+                  aria-label="Previous"
+                  onClick={prevTrack}
+                  className="p-2 rounded hover:bg-purple-300 dark:hover:bg-purple-800"
+                >
+                  <SkipBack size={24} />
+                </button>
+                <button
+                  aria-label="Play/Pause"
+                  onClick={togglePlay}
+                  className="p-3 rounded-full bg-purple-700 text-white shadow-lg hover:brightness-90"
+                >
+                  {isPlaying ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      className="w-6 h-6"
+                    >
+                      <rect x="6" y="4" width="4" height="16" fill="currentColor" />
+                      <rect x="14" y="4" width="4" height="16" fill="currentColor" />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      className="w-6 h-6"
+                    >
+                      <path d="M5 3l14 9-14 9V3z" />
+                    </svg>
+                  )}
+                </button>
+                <button
+                  aria-label="Next"
+                  onClick={nextTrack}
+                  className="p-2 rounded hover:bg-purple-300 dark:hover:bg-purple-800"
+                >
+                  <SkipForward size={24} />
+                </button>
+                <button
+                  aria-label="Loop"
+                  onClick={toggleLoop}
+                  className={`p-2 rounded ${isLoop ? "bg-purple-700 text-white" : "hover:bg-purple-300 dark:hover:bg-purple-800"}`}
+                >
+                  <Repeat size={20} />
+                </button>
+              </div>
+
+              {/* Volume */}
+              <div className="flex items-center gap-2 w-full">
+                <button
+                  aria-label="Mute/Unmute"
+                  onClick={() => {
+                    if (isMuted) {
+                      setVolume(0.5);
+                      setIsMuted(false);
+                      if (audioRef.current) audioRef.current.volume = 0.5;
+                    } else {
+                      setVolume(0);
+                      setIsMuted(true);
+                      if (audioRef.current) audioRef.current.volume = 0;
+                    }
+                  }}
+                  className="p-2 rounded hover:bg-purple-300 dark:hover:bg-purple-800"
+                >
+                  {isMuted || volume === 0 ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+                      <path d="M16.5 12l5-5m0 10l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M9 9v6H5l-4 4V5l4 4h4z" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+                      <path d="M5 9v6h4l5 5V4L9 9H5z" />
+                    </svg>
+                  )}
+                </button>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={volume}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setVolume(val);
+                    setIsMuted(val === 0);
+                    if (audioRef.current) audioRef.current.volume = val;
+                  }}
+                  className="w-full"
+                />
+              </div>
             </div>
-          </div>
+          )}
+
 
           {/* ✅ Right: List views (hidden on mobile when view === "home") */}
           {(!isMobile || view !== "home") && (
